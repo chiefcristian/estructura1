@@ -323,82 +323,64 @@ class dlinkedlist:
 
     lista_aislamiento = dlinkedlist()
 
-    nodo_inicio = None
-    nodo_fin = None
-
+    inicio = None
+    fin = None
     actual = self.__head
 
     while actual is not None:
 
-      if actual.value.id_paciente == id_inicio:
-        nodo_inicio = actual
+        if actual.value.id_paciente == id_inicio:
+            inicio = actual
 
-      if actual.value.id_paciente == id_fin:
-        nodo_fin = actual
+        if actual.value.id_paciente == id_fin:
+            fin = actual
 
-      actual = actual.next
+        actual = actual.next
 
-    if nodo_inicio is None or nodo_fin is None:
-      return lista_aislamiento
+    if inicio is None or fin is None:
+        return lista_aislamiento
 
-    if nodo_inicio is nodo_fin:
-      return lista_aislamiento
+    if inicio is fin:
+        return lista_aislamiento
 
-    actual = nodo_inicio
-    estan_en_orden = False
+    actual = inicio
 
-    while actual is not None:
+    while actual is not fin and actual is not None:
+        actual = actual.next
 
-      if actual is nodo_fin:
-        estan_en_orden = True
-        break
+    if actual is None:
+        inicio, fin = fin, inicio
 
-      actual = actual.next
+    primero = inicio.next
+    ultimo = fin.prev
 
-    if estan_en_orden is False:
+    if primero is fin:
+        return lista_aislamiento
 
-      temporal = nodo_inicio
-      nodo_inicio = nodo_fin
-      nodo_fin = temporal
-
-    primero_extraer = nodo_inicio.next
-    ultimo_extraer = nodo_fin.prev
-
-    if primero_extraer is nodo_fin:
-      return lista_aislamiento
-
-    lista_aislamiento.head = primero_extraer
-    lista_aislamiento.tail = ultimo_extraer
+    lista_aislamiento.head = primero
+    lista_aislamiento.tail = ultimo
 
     cantidad = 0
-    actual = primero_extraer
+    actual = primero
 
-    while actual is not nodo_fin:
+    while actual is not fin:
 
-      cantidad += 1
+        cantidad += 1
 
-      if actual is ultimo_extraer:
-        break
+        if actual is ultimo:
+            break
 
-      actual = actual.next
+        actual = actual.next
 
+    lista_aislamiento.head = primero
+    lista_aislamiento.tail = ultimo
     lista_aislamiento.size = cantidad
 
-    previo = primero_extraer.prev
-    siguiente = ultimo_extraer.next
+    inicio.next = fin
+    fin.prev = inicio
 
-    if previo is None:
-      self.__head = siguiente
-    else:
-      previo.next = siguiente
-
-    if siguiente is None:
-      self.__tail = previo
-    else:
-      siguiente.prev = previo
-
-    primero_extraer.prev = None
-    ultimo_extraer.next = None
+    primero.prev = None
+    ultimo.next = None
 
     self.__size -= cantidad
 
@@ -586,14 +568,8 @@ class Paciente:
     self.categoria = categoria
     self.nivel_triage = nivel_triage
 
-  def __str__(self):
-    return (
-      self.id_paciente
-      + " | "
-      + self.categoria
-      + " | Triage "
-      + str(self.nivel_triage)
-    )
+  def __repr__(self):
+        return f"({self.id_paciente},{self.categoria},{self.nivel_triage})"
 
 
 lista_principal = dlinkedlist()
@@ -619,7 +595,7 @@ lista_principal.append(
 )
 
 lista_principal.append(
-  Paciente("P-106", "adulto", 2)
+  Paciente("P-106", "pediatria", 2)
 )
 
 lista_principal.append(
