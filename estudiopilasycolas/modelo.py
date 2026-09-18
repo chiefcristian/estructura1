@@ -1,4 +1,6 @@
 from pilasycolas import Stack, Queue
+
+
 class Solicitud:
     def __init__(self, id, descripcion, tipo):
         self.id = id
@@ -53,13 +55,14 @@ class Sistema:
         self.pila.push(Area("Recepción y Triaje", 4))
 
     def obtener_area_tope(self):
-        area = self.pila.pop()
-        self.pila.push(area)
-        return area
+        return self.pila.top()
 
     def registrar_solicitud(self, solicitud):
+        if self.pila.is_empty():
+            return False
         area = self.obtener_area_tope()
         area.agregar_solicitud(solicitud)
+        return True
 
     def preparar_turno(self):
         auxiliar = Stack()
@@ -116,56 +119,62 @@ class Sistema:
 
             procesadas = procesadas + 1
 
-            self.enviar_siguiente(area, solicitud)
+            self.enviar_siguiente(solicitud)
 
         return procesadas
 
-    def enviar_siguiente(self, area, solicitud):
-        auxiliar = Stack()
-        encontrado = False
-
-        while not self.pila.is_empty():
-            actual = self.pila.pop()
-
-            if actual.nombre == area.nombre:
-                encontrado = True
-                auxiliar.push(actual)
-
-                if not self.pila.is_empty():
-                    siguiente = self.pila.pop()
-                    siguiente.agregar_solicitud(solicitud)
-                    auxiliar.push(siguiente)
-
-                break
-
-            auxiliar.push(actual)
-
-        while not auxiliar.is_empty():
-            self.pila.push(auxiliar.pop())
-
-        if not encontrado:
-            return
+    def enviar_siguiente(self, solicitud):
+        if not self.pila.is_empty():
+            siguiente = self.pila.top()
+            siguiente.agregar_solicitud(solicitud)
 
     def ejecutar_turno(self):
         self.turno = self.turno + 1
 
         self.preparar_turno()
 
+        print()
+        print("=============== REPORTE DEL TURNO ===============")
+        print("Turno:", self.turno)
+        print()
+
         auxiliar = Stack()
         procesadas = 0
+        finalizadas = 0
 
         while not self.pila.is_empty():
             area = self.pila.pop()
 
+            es_base = self.pila.is_empty()
+
             cantidad_procesada = self.procesar_area(area)
             procesadas = procesadas + cantidad_procesada
+            en_espera = area.pendientes_turno - cantidad_procesada
+
+            print(area.nombre, f"(Capacidad efectiva: {self.capacidad_efectiva(area)})")
+            print("  Procesadas:", cantidad_procesada)
+
+            if es_base:
+                finalizadas = finalizadas + cantidad_procesada
+                print("  Finalizadas y fuera del sistema:", cantidad_procesada)
+            else:
+                print("  Transferidas a la siguiente etapa:", cantidad_procesada)
+
+            print("  En espera:", en_espera)
+
+            if area.sobrecargada:
+                print("  ALERTA: área en estado crítico (más de 5 pendientes)")
 
             auxiliar.push(area)
 
         while not auxiliar.is_empty():
             self.pila.push(auxiliar.pop())
 
-        self.mostrar_reporte(procesadas)
+        print()
+        print("Total procesadas en el turno:", procesadas)
+        print("Total finalizadas:", finalizadas)
+        print("=================================================")
+        print()
 
     def hay_solicitudes(self):
         auxiliar = Stack()
@@ -207,17 +216,20 @@ class Sistema:
             return False
 
         if eliminada.cantidad_solicitudes() > 0:
+            if self.pila.is_empty():
+                print("No hay área destino, las solicitudes salen del sistema.")
+                return True
+
             destino = self.obtener_area_tope()
 
-            if eliminada.es_recepcion():
-                while not eliminada.cola_alta.is_empty():
-                    destino.agregar_solicitud(eliminada.cola_alta.dequeue())
+            while not eliminada.cola_alta.is_empty():
+                destino.agregar_solicitud(eliminada.cola_alta.dequeue())
 
-                while not eliminada.cola_normal.is_empty():
-                    destino.agregar_solicitud(eliminada.cola_normal.dequeue())
-            else:
-                while not eliminada.cola.is_empty():
-                    destino.agregar_solicitud(eliminada.cola.dequeue())
+            while not eliminada.cola_normal.is_empty():
+                destino.agregar_solicitud(eliminada.cola_normal.dequeue())
+
+            while not eliminada.cola.is_empty():
+                destino.agregar_solicitud(eliminada.cola.dequeue())
 
         return True
 
@@ -225,6 +237,7 @@ class Sistema:
         nueva = Area(nombre, capacidad)
         self.pila.push(nueva)
 
+    
     def mostrar_estado(self):
         auxiliar = Stack()
 
@@ -232,12 +245,19 @@ class Sistema:
         print("========== ESTADO ACTUAL DEL SISTEMA ==========")
         print()
 
-        numero = self.pila.len()
+        numero = 1
 
         while not self.pila.is_empty():
             area = self.pila.pop()
 
-            print(f"{numero}. Área: {area.nombre} (Capacidad: {area.capacidad}) | Sobrecargada: {'Sí' if area.sobrecargada else 'No'}")
+            if numero == 1:
+                posicion = "<< TOPE"
+            elif self.pila.is_empty():
+                posicion = "<< BASE"
+            else:
+                posicion = ""
+
+            print(f"{numero}. Área: {area.nombre} (Capacidad: {area.capacidad}) | Sobrecargada: {'Sí' if area.sobrecargada else 'No'} {posicion}")
 
             if area.es_recepcion():
                 print("   Cola Alta Prioridad:")
@@ -263,7 +283,7 @@ class Sistema:
 
             print()
 
-            numero = numero - 1
+            numero = numero + 1
             auxiliar.push(area)
 
         while not auxiliar.is_empty():
@@ -271,30 +291,3 @@ class Sistema:
 
         print("===============================================")
         print()
-
-    def mostrar_reporte(self, procesadas):
-        print()
-        print("=============== REPORTE DEL TURNO ===============")
-        print("Turno:", self.turno)
-        print("Solicitudes procesadas:", procesadas)
-        print()
-
-        auxiliar = Stack()
-
-        while not self.pila.is_empty():
-            area = self.pila.pop()
-
-            print(area.nombre)
-            print("  Pendientes:", area.cantidad_solicitudes())
-
-            if area.sobrecargada:
-                print("  ALERTA: Área en estado crítico / sobrecargada")
-
-            auxiliar.push(area)
-
-        while not auxiliar.is_empty():
-            self.pila.push(auxiliar.pop())
-
-        print("==================================================")
-        print()
-        

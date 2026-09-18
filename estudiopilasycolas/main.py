@@ -5,11 +5,11 @@ def registrar_solicitud(sistema):
     id = input("Ingrese el ID de la solicitud: ")
     descripcion = input("Ingrese la descripción: ")
 
-    tipo = input("Ingrese el tipo (Alta/Normal): ")
+    tipo = input("Ingrese el tipo (Alta/Normal): ").strip().capitalize()
 
     while tipo != "Alta" and tipo != "Normal":
         print("Tipo inválido.")
-        tipo = input("Ingrese el tipo (Alta/Normal): ")
+        tipo = input("Ingrese el tipo (Alta/Normal): ").strip().capitalize()
 
     solicitud = Solicitud(id, descripcion, tipo)
 
