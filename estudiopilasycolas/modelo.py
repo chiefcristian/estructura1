@@ -130,40 +130,31 @@ class Sistema:
 
     def ejecutar_turno(self):
         self.turno = self.turno + 1
-
         self.preparar_turno()
 
         print()
-        print("=============== REPORTE DEL TURNO ===============")
+        print(" REPORTE DEL TURNO ")
         print("Turno:", self.turno)
         print()
 
         auxiliar = Stack()
-        procesadas = 0
-        finalizadas = 0
+        total = 0
 
         while not self.pila.is_empty():
             area = self.pila.pop()
 
-            es_base = self.pila.is_empty()
+            cantidad = self.procesar_area(area)
+            total = total + cantidad
 
-            cantidad_procesada = self.procesar_area(area)
-            procesadas = procesadas + cantidad_procesada
-            en_espera = area.pendientes_turno - cantidad_procesada
+            print(area.nombre)
+            print("  Procesadas:", cantidad)
 
-            print(area.nombre, f"(Capacidad efectiva: {self.capacidad_efectiva(area)})")
-            print("  Procesadas:", cantidad_procesada)
-
-            if es_base:
-                finalizadas = finalizadas + cantidad_procesada
-                print("  Finalizadas y fuera del sistema:", cantidad_procesada)
+            if self.pila.is_empty():
+                print("  Finalizadas:", cantidad)
             else:
-                print("  Transferidas a la siguiente etapa:", cantidad_procesada)
+                print("  Transferidas:", cantidad)
 
-            print("  En espera:", en_espera)
-
-            if area.sobrecargada:
-                print("  ALERTA: área en estado crítico (más de 5 pendientes)")
+            print("  En espera:", area.pendientes_turno - cantidad)
 
             auxiliar.push(area)
 
@@ -171,10 +162,7 @@ class Sistema:
             self.pila.push(auxiliar.pop())
 
         print()
-        print("Total procesadas en el turno:", procesadas)
-        print("Total finalizadas:", finalizadas)
-        print("=================================================")
-        print()
+        print("Total procesadas:", total)
 
     def hay_solicitudes(self):
         auxiliar = Stack()

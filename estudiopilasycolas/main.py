@@ -42,8 +42,8 @@ def menu():
     opcion = ""
 
     while opcion != "7":
+        print("   MESA DE AYUDA")
         print()
-        print("============== MESA DE AYUDA ==============")
         print("1. Registrar Solicitud")
         print("2. Ejecutar un Turno")
         print("3. Ejecutar Automáticamente")
@@ -51,7 +51,7 @@ def menu():
         print("5. Agregar Nueva Área")
         print("6. Consultar Estado del Sistema")
         print("7. Salir")
-        print("============================================")
+        
 
         opcion = input("Seleccione una opción: ")
 
